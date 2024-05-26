@@ -1,0 +1,292 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'crud/css/styles.css' %}">
+  <title>Editar Empresa</title>
+{% endblock %}
+
+{% block content %}
+  <main>
+    <div class="text-center alert alert-success" role="alert">Salvo</div>
+    <div class="text-start">
+      <a href="{% url 'index' %}">
+        <i class="fas fa-arrow-circle-left"></i>
+      </a>
+    </div>
+    <form id="edit-company-form" method="post" class="mb-5">
+      <h1 class="mb-5 text-center">Edição de Empresa</h1>
+      {% csrf_token %}
+      <div class="row mb-3">
+        <div class="col">
+          {{ company_form.razao_social }}
+        </div>
+        <div class="col">
+          {{ company_form.cnpj }}
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col">
+          {{ company_form.endereco }}
+        </div>
+        <div class="col">
+          {{ company_form.numero }}
+        </div>
+        <div class="col">
+          {{ company_form.complemento }}
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col">
+          {{ company_form.bairro }}
+        </div>
+        <div class="col">
+          {{ company_form.cidade }}
+        </div>
+        <div class="col">
+          {{ company_form.estado }}
+        </div>
+        <div class="col">
+          {{ company_form.cep }}
+        </div>
+      </div>
+    </form>
+    <table class="table">
+      <h1 class="mb-5 text-center">Contatos</h1>
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Nome</th>
+          <th scope="col">Telefone</th>
+          <th scope="col">Celular</th>
+          <th scope="col">Email</th>
+          <th scope="col">Cargo</th>
+          <th scope="col">Departamento</th>
+          <th scope="col">Observação</th>
+          <th scope="col">Recebe Email</th>
+          <th scope="col">Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for contact in company.contact_set.all %}
+          <tr>
+            <th scope="row">{{ contact.id }}</th>
+            <td>{{ contact.nome }}</td>
+            <td>{{ contact.telefone }}</td>
+            <td>{{ contact.celular }}</td>
+            <td>{{ contact.email }}</td>
+            <td>{{ contact.cargo }}</td>
+            <td>{{ contact.departamento }}</td>
+            <td>{{ contact.observacao }}</td>
+            <td>{{ contact.recebe_email }}</td>
+            <td><i contact_id="{{ contact.id }}" class="fa-solid fa-trash-can"></i></td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="d-flex justify-content-end mb-5">
+      <button id="show-contact-form" class="w-100 btn btn-primary" type="button">+</button>
+    </div>
+    <div id="shadow-background"></div>
+    <form id="contact-form" class="p-3" method="post" class="mb-5">
+      <div class="text-end">
+        <i id="hide-contact-form" class="fa-solid fa-x"></i>
+      </div>
+      <h1 class="mb-5 text-center">Cadastro Contato</h1>
+      {% csrf_token %}
+      <div class="row mb-3">
+        <div class="col">
+          {{ contact_form.nome }}
+        </div>
+        <div class="col">
+          {{ contact_form.telefone }}
+        </div>
+        <div class="col">
+          {{ contact_form.celular }}
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col">
+          {{ contact_form.email }}
+        </div>
+        <div class="col">
+          {{ contact_form.cargo }}
+        </div>
+        <div class="col">
+          {{ contact_form.departamento }}
+        </div>
+      </div>
+      <div class="row mb-3">
+        <div class="col">
+          {{ contact_form.observacao }}
+        </div>
+        <div class="col form-check">
+          <label class="form-check-label" for="{{ contact_form.recebe_email.auto_id }}">{{ contact_form.recebe_email.label }}</label>
+          {{ contact_form.recebe_email }}
+        </div>
+      </div>
+      <div class="d-flex justify-content-end">
+        <input class="btn btn-primary" type="submit" value="Adicionar Contato">
+      </div>
+    </form>
+    <div class="d-flex justify-content-end mb-5">
+      <button id="save-button" class="w-100 btn btn-primary" type="button">Salvar</button>
+    </div>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.querySelector('#save-button').addEventListener('click', (event) => {
+      let contacts_ids = [];
+      document.querySelectorAll('tbody th').forEach((element) => {
+        contacts_ids.push(parseInt(element.innerText));
+      });
+      fetch('/crud/api/editar-empresa', {
+        method: 'put',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({
+          empresa_id: parseInt(window.location.href.split('/').slice(-1)),
+          razao_social: document.querySelector('input[name=razao_social]').value,
+          cnpj: document.querySelector('input[name=cnpj]').value,
+          estado: document.querySelector('input[name=estado]').value,
+          cidade: document.querySelector('input[name=cidade]').value,
+          bairro: document.querySelector('input[name=bairro]').value,
+          endereco: document.querySelector('input[name=endereco]').value,
+          cep: document.querySelector('input[name=cep]').value,
+          numero: document.querySelector('input[name=numero]').value,
+          complemento: document.querySelector('input[name=complemento]').value,
+          contatos_ids: contacts_ids,
+        })
+      });
+      document.querySelector('.alert-success').style.display = 'block';
+      window.setTimeout(() => {
+        document.querySelector('.alert-success').style.display = 'none';
+      }, 5000);
+      event.preventDefault();
+    });
+
+
+    document.querySelector('#contact-form').addEventListener('submit', (event) => {
+      fetch('/crud/api/adicionar-contato', {
+        method: 'post',
+        headers: {
+          'Accept': 'application/json',
+          'Content-Type': 'application/json',
+          'X-CSRFToken': '{{ csrf_token }}',
+        },
+        body: JSON.stringify({
+          nome: document.querySelector('input[name=nome]').value,
+          telefone: document.querySelector('input[name=telefone]').value,
+          celular: document.querySelector('input[name=celular]').value,
+          email: document.querySelector('input[name=email]').value,
+          cargo: document.querySelector('input[name=cargo]').value,
+          departamento: document.querySelector('input[name=departamento]').value,
+          observacao: document.querySelector('input[name=observacao]').value,
+          recebe_email: document.querySelector('.form-check-input').checked,
+        })
+      }).then(response => response.json()).then((data) => {
+        let tr = document.createElement('tr');
+        th = document.createElement('th');
+        th.setAttribute('scope', 'row');
+        th.appendChild(document.createTextNode(data['id'].toString()));
+        tr.appendChild(th);
+        let td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['nome']));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['telefone']));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['celular']));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['email']));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['cargo']));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['departamento']));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['observacao']));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        td.appendChild(document.createTextNode(data['recebe_email'] ? 'Sim' : 'Não'));
+        tr.appendChild(td);
+        td = document.createElement('td');
+        let trash_icon = document.createElement('i');
+        trash_icon.setAttribute('class', 'fa-solid fa-trash-can');
+        trash_icon.setAttribute('aria-hidden', 'true');
+        trash_icon.setAttribute('contact_id', data['id'].toString());
+        trash_icon.addEventListener('click', (event) => {
+          document.querySelectorAll('tr').forEach((tr) => {
+            if(tr.querySelector('th').innerText === trash_icon.getAttribute('contact_id')){
+              fetch('/crud/api/deletar-contato', {
+                method: 'delete',
+                headers: {
+                  'Accept': 'application/json',
+                  'Content-Type': 'application/json',
+                  'X-CSRFToken': '{{ csrf_token }}',
+                },
+                body: JSON.stringify({
+                  contato_id: parseInt(trash_icon.getAttribute('contact_id')),
+                }),
+              });
+              tr.remove();
+            }
+          });
+        });
+        td.appendChild(trash_icon);
+        tr.appendChild(td);
+        document.querySelector('tbody').appendChild(tr);
+      });
+      document.querySelectorAll('#contact-form input.form-control').forEach((element) => {
+        element.value = '';
+      })
+      event.preventDefault();
+    });
+
+
+    document.querySelector('#show-contact-form').addEventListener('click', (event) => {
+      document.querySelector('#shadow-background').style.display = 'block';
+      document.querySelector('#contact-form').style.display = 'block';
+      document.querySelector('#show-contact-form').style.display = 'none';
+    });
+
+    
+    document.querySelector('#hide-contact-form').addEventListener('click', (event) => {
+      document.querySelector('#shadow-background').style.display = 'none';
+      document.querySelector('#contact-form').style.display = 'none';
+      document.querySelector('#show-contact-form').style.display = 'block';
+    });
+
+
+    document.querySelectorAll('.fa-trash-can').forEach((trash_icon) => {
+      console.log('Teste');
+      trash_icon.addEventListener('click', (event) => {
+        document.querySelectorAll('tr').forEach((tr) => {
+          if(tr.querySelector('th').innerText === trash_icon.getAttribute('contact_id')){
+            fetch('/crud/api/deletar-contato', {
+              method: 'delete',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+              },
+              body: JSON.stringify({
+                contato_id: parseInt(trash_icon.getAttribute('contact_id')),
+              }),
+            });
+            tr.remove();
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}

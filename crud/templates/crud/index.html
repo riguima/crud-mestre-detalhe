@@ -1,0 +1,80 @@
+{% extends 'base.html' %}
+
+{% block head %}
+  {% load static %}
+  <link rel="stylesheet" href="{% static 'crud/css/styles.css' %}">
+  <title>CRUD</title>
+{% endblock %}
+
+{% block content %}
+  <main>
+    <table class="table">
+      <h1 class="mb-5 text-center">Empresas</h1>
+      <thead>
+        <tr>
+          <th scope="col">#</th>
+          <th scope="col">Razão Social</th>
+          <th scope="col">Endereço</th>
+          <th scope="col">Estado</th>
+          <th scope="col">CEP</th>
+          <th scope="col">Bairro</th>
+          <th scope="col">Cidade</th>
+          <th scope="col">CNPJ</th>
+          <th scope="col">Número</th>
+          <th scope="col">Complemento</th>
+          <th scope="col">Ação</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for company in companies %}
+          <tr>
+            <th scope="row">{{ company.id }}</th>
+            <td>{{ company.razao_social }}</td>
+            <td>{{ company.endereco }}</td>
+            <td>{{ company.estado }}</td>
+            <td>{{ company.cep }}</td>
+            <td>{{ company.bairro }}</td>
+            <td>{{ company.cidade }}</td>
+            <td>{{ company.cnpj }}</td>
+            <td>{{ company.numero }}</td>
+            <td>{{ company.complemento }}</td>
+            <td>
+              <a href="{% url 'edit_company' company_id=company.id %}">
+                <i class="fas fa-edit"></i>
+              </a>
+              <i company_id="{{ company.id }}" class="fa-solid fa-trash-can"></i>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    <div class="d-flex justify-content-end">
+      <a class="btn btn-primary" href="{% url 'add_company' %}">Adicionar Empresa</a>
+    </div>
+  </main>
+{% endblock %}
+
+{% block scripts %}
+  <script>
+    document.querySelectorAll('.fa-trash-can').forEach((element) => {
+      element.addEventListener('click', (event) => {
+        document.querySelectorAll('tr').forEach((tr) => {
+          if(tr.querySelector('th').innerText === element.getAttribute('company_id')){
+            fetch('/crud/api/deletar-empresa', {
+              method: 'delete',
+              headers: {
+                'Accept': 'application/json',
+                'Content-Type': 'application/json',
+                'X-CSRFToken': '{{ csrf_token }}',
+              },
+              body: JSON.stringify({
+                empresa_id: parseInt(element.getAttribute('company_id')),
+              }),
+            });
+            tr.remove();
+          }
+        });
+      });
+    });
+  </script>
+{% endblock %}
