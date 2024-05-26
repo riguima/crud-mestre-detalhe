@@ -151,6 +151,33 @@ def edit_company_action(request):
     return HttpResponseNotFound()
 
 
+def edit_contact_action(request):
+    if request.method == 'PUT':
+        data = json.loads(request.body)
+        contact_model = Contact.objects.get(pk=data['contato_id'])
+        contact_model.nome = data['nome']
+        contact_model.telefone = data['telefone']
+        contact_model.celular = data['celular']
+        contact_model.email = data['email']
+        contact_model.cargo = data['cargo']
+        contact_model.departamento = data['departamento']
+        contact_model.observacao = data['observacao']
+        contact_model.recebe_email = data['recebe_email']
+        contact_model.save()
+        return JsonResponse({
+            'id': contact_model.id,
+            'nome': contact_model.nome,
+            'telefone': contact_model.telefone,
+            'celular': contact_model.celular,
+            'email': contact_model.email,
+            'cargo': contact_model.cargo,
+            'departamento': contact_model.departamento,
+            'observacao': contact_model.observacao,
+            'recebe_email': contact_model.recebe_email,
+        })
+    return HttpResponseNotFound()
+
+
 def delete_company_action(request):
     if request.method == 'DELETE':
         data = json.loads(request.body)

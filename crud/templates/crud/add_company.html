@@ -78,6 +78,7 @@
     </div>
     <div id="shadow-background"></div>
     <form id="contact-form" class="p-3" method="post" class="mb-5">
+      <input type="hidden" name="contato_id">
       <div class="text-end">
         <i id="hide-contact-form" class="fa-solid fa-x"></i>
       </div>
@@ -161,24 +162,56 @@
 
 
     document.querySelector('#contact-form').addEventListener('submit', (event) => {
-      fetch('/crud/api/adicionar-contato', {
-        method: 'post',
+      let endpoint = '/crud/api/adicionar-contato';
+      let method = 'post';
+      if(document.querySelector('#contact-form input[type=submit]').value == 'Salvar'){
+        endpoint = '/crud/api/editar-contato';
+        method = 'put';
+      }
+      let body = {
+        nome: document.querySelector('input[name=nome]').value,
+        telefone: document.querySelector('input[name=telefone]').value,
+        celular: document.querySelector('input[name=celular]').value,
+        email: document.querySelector('input[name=email]').value,
+        cargo: document.querySelector('input[name=cargo]').value,
+        departamento: document.querySelector('input[name=departamento]').value,
+        observacao: document.querySelector('input[name=observacao]').value,
+        recebe_email: document.querySelector('.form-check-input').checked,
+      }
+      if(endpoint == '/crud/api/editar-contato'){
+        body.contato_id = document.querySelector('input[name=contato_id]').value;
+      }
+      fetch(endpoint, {
+        method: method,
         headers: {
           'Accept': 'application/json',
           'Content-Type': 'application/json',
           'X-CSRFToken': '{{ csrf_token }}',
         },
-        body: JSON.stringify({
-          nome: document.querySelector('input[name=nome]').value,
-          telefone: document.querySelector('input[name=telefone]').value,
-          celular: document.querySelector('input[name=celular]').value,
-          email: document.querySelector('input[name=email]').value,
-          cargo: document.querySelector('input[name=cargo]').value,
-          departamento: document.querySelector('input[name=departamento]').value,
-          observacao: document.querySelector('input[name=observacao]').value,
-          recebe_email: document.querySelector('.form-check-input').checked,
-        })
+        body: JSON.stringify(body),
       }).then(response => response.json()).then((data) => {
+        if(endpoint == '/crud/api/editar-contato'){
+          document.querySelectorAll('tr').forEach((tr) => {
+            if(tr.querySelector('th').innerText == data['id']){
+              let tds = tr.querySelectorAll('td');
+              tds[0].innerText = data['nome'];
+              tds[1].innerText = data['telefone'];
+              tds[2].innerText = data['celular'];
+              tds[3].innerText = data['email'];
+              tds[4].innerText = data['cargo'];
+              tds[5].innerText = data['departamento'];
+              tds[6].innerText = data['observacao'];
+              tds[7].innerText = data['recebe_email'] ? 'Sim' : 'Não';
+            }
+          });
+          document.querySelector('.alert-success').style.display = 'block';
+          document.querySelector('.alert-success').innerText = 'Salvo';
+          window.setTimeout(() => {
+            document.querySelector('.alert-success').style.display = 'none';
+            document.querySelector('.alert-success').innerText = 'Empresa Adicionada';
+          }, 5000);
+          return;
+        }
         let tr = document.createElement('tr');
         th = document.createElement('th');
         th.setAttribute('scope', 'row');
@@ -209,6 +242,28 @@
         td.appendChild(document.createTextNode(data['recebe_email'] ? 'Sim' : 'Não'));
         tr.appendChild(td);
         td = document.createElement('td');
+        let edit_icon = document.createElement('i')
+        edit_icon.setAttribute('class', 'fas fa-edit');
+        edit_icon.setAttribute('contact_id', data['id'].toString());
+        edit_icon.addEventListener('click', (event) => {
+          document.querySelector('#contact-form').style.display = 'block';
+          document.querySelector('#shadow-background').style.display = 'block';
+          document.querySelector('#show-contact-form').style.display = 'none';
+          document.querySelector('#contact-form input[type=submit]').value = 'Salvar';
+          document.querySelector('input[name=contato_id]').value = data['id'].toString();
+          document.querySelector('input[name=nome]').value = data['nome'];
+          document.querySelector('input[name=telefone]').value = data['telefone'];
+          document.querySelector('input[name=celular]').value = data['celular'];
+          document.querySelector('input[name=email]').value = data['email'];
+          document.querySelector('input[name=cargo]').value = data['cargo'];
+          document.querySelector('input[name=departamento]').value = data['departamento'];
+          document.querySelector('input[name=observacao]').value = data['observacao'];
+          if(data['recebe_email']){
+            document.querySelector('input[name=recebe_email]').checked = true;
+          } else {
+            document.querySelector('input[name=recebe_email]').checked = false;
+          }
+        });
         let trash_icon = document.createElement('i');
         trash_icon.setAttribute('class', 'fa-solid fa-trash-can');
         trash_icon.setAttribute('aria-hidden', 'true');
@@ -231,13 +286,16 @@
             }
           });
         });
+        td.appendChild(edit_icon);
         td.appendChild(trash_icon);
         tr.appendChild(td);
         document.querySelector('tbody').appendChild(tr);
       });
-      document.querySelectorAll('#contact-form input.form-control').forEach((element) => {
-        element.value = '';
-      })
+      if(endpoint == '/crud/api/adicionar-contato'){
+        document.querySelectorAll('#contact-form input.form-control').forEach((element) => {
+          element.value = '';
+        })
+      }
       event.preventDefault();
     });
 
